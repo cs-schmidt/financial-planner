@@ -1,0 +1,14 @@
+default_install_hook_types: [pre-commit]
+repos:
+  # Adds Angular-style commit message linting.
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v4.6.3
+    hooks:
+      - id: commitizen
+  # Adds Ruff linting and formatting.
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.9
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format

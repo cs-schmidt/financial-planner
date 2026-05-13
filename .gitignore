@@ -1,0 +1,7 @@
+__pycache__/
+.env/
+.ipynb_checkpoints/
+.jupyter/
+.ruff_cache/
+.temp/
+.venv/
