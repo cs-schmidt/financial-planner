@@ -1,3 +1,5 @@
+// TODO: Update this validation script and add a separate one for durables spreadsheets.
+
 /**
  * A Google Apps Script which provides functions to validate the structure and content of
  * an expense spreadsheet
@@ -190,7 +192,7 @@ function addServiceExpenseValidations(ssheet) {
   }
   const headers = new Set(getSheetHeaders(sheet));
   const missingHeaders = EXPENSE_HEADERS_BY_NAME['services'].filter(
-    (header) => !headers.has(header)
+    (header) => !headers.has(header),
   );
   if (missingHeaders.length)
     throw Error(`Cannot add service validations: missing headers ${missingHeaders}.`);
@@ -225,7 +227,7 @@ function addNondurableExpenseValidations(ssheet) {
   }
   const headers = new Set(getSheetHeaders(sheet));
   const missingHeaders = EXPENSE_HEADERS_BY_NAME['nondurables'].filter(
-    (header) => !headers.has(header)
+    (header) => !headers.has(header),
   );
   if (missingHeaders.length)
     throw Error(`Cannot add nondurable validations: missing headers ${missingHeaders}.`);
@@ -262,7 +264,7 @@ function addObligationExpenseValidations(ssheet) {
   }
   const headers = new Set(getSheetHeaders(sheet));
   const missingHeaders = EXPENSE_HEADERS_BY_NAME['obligations'].filter(
-    (header) => !headers.has(header)
+    (header) => !headers.has(header),
   );
   if (missingHeaders.length)
     throw Error(`Cannot add obligation validations: missing headers ${missingHeaders}.`);
@@ -296,7 +298,7 @@ function addDurableExpenseValidation(ssheet) {
   }
   const headers = new Set(getSheetHeaders(sheet));
   const missingHeaders = EXPENSE_HEADERS_BY_NAME['durables'].filter(
-    (header) => !headers.has(header)
+    (header) => !headers.has(header),
   );
   if (missingHeaders.length)
     throw Error(`Cannot add durable validations: missing headers ${missingHeaders}.`);
