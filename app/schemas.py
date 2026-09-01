@@ -8,7 +8,7 @@ from pandera.engines.pandas_engine import DateTime
 
 class LvePlanID(StrEnum):
     MAIN = "1RxN51OOplOzo8RTqI3-3BrMgBf4FpJOGVgMxyp6Ox54"
-    NEXT = "12GXbZ6SMRJgOcbTphoWpaefCpBTdmdcYAK64Jccx4uc"
+    NEXT = "18BIDjez8kELHFFibeVEXJwj0HXtkdEMUPTN0VFewHDg"
 
 
 class LveCategory(StrEnum):
@@ -25,38 +25,42 @@ class PeriodType(StrEnum):
     DAY = "Day"
 
 
-# Personal spending categories.
 PAY_CATEGORIES: tuple[str, ...] = (
     "Housing",
     "Auto",
-    "Food & Dining",
-    "Health & Personal Care",
+    "Diet",
+    "Health & Self-Care",
     "Clothing",
-    "Education & Research",
+    "Learning",
+    "Electronics, Apps, & Comms",
     "Furnishings & Textiles",
-    "Kitchen Equipment & Supplies",
-    "Electronics & Software",
+    "Kitchen",
     "Cleaning",
-    "Other Operations & Equipment",
+    "Other Household Costs",
     "Transport & Travel",
     "Finance & Legal",
     "Recreation",
-    "Other Expenses",
+    "Other Costs",
 )
 
-# TODO: Derive from data source (do not store as Enum or closed set of strings).
+# NOTE: Maybe derive from data source (don't store as Enum or closed set of strings).
 CPI_CATEGORIES: tuple[str, ...] = (
-    "Food purchased from stores",
-    "Food purchased from restaurants",
+    # Shelter
     "Rent",
     "Tenants' insurance premiums",
+    "Tenants' maintenance, repairs and other expenses",
     "Electricity",
     "Water",
     "Natural gas",
     "Fuel oil and other fuels",
+    # Food
+    "Food",
+    "Food purchased from stores",
+    "Food purchased from restaurants",
+    # Household Operations
     "Telephone services",
-    "Postal and other communications services",
     "Internet access services",
+    "Postal and other communications services",
     "Laundry detergents and soaps",
     "Detergents and rinse agents for dish washing",
     "Household cleaning and polishing products",
@@ -68,9 +72,11 @@ CPI_CATEGORIES: tuple[str, ...] = (
     "Other household supplies",
     "Other household services",
     "Financial services",
+    # Household Furnishing and Equpment
     "Upholstered furniture",
     "Wooden furniture",
     "Other furniture",
+    "Window Coverings",
     "Bedding and other household textiles",
     "Cooking appliances",
     "Refrigerators and freezers",
@@ -79,12 +85,14 @@ CPI_CATEGORIES: tuple[str, ...] = (
     "Non-electric kitchen utensils, tableware and cookware",
     "Household tools (including lawn, garden and snow removal equipment)",
     "Other household equipment",
+    # Clothing
     "Men's clothing",
     "Men's footwear (excluding athletic)",
     "Athletic footwear",
     "Clothing accessories",
     "Watches",
     "Clothing material, notions and services",
+    # Transportation
     "Gasoline",
     "Passenger vehicle parts, accessories and supplies",
     "Passenger vehicle maintenance and repair services",
@@ -94,6 +102,7 @@ CPI_CATEGORIES: tuple[str, ...] = (
     "Parking fees",
     "City bus and subway transportation",
     "Air transportation",
+    # Health
     "Prescribed medicines (excluding medicinal cannabis)",
     "Non-prescribed medicines",
     "Eye care goods",
@@ -101,11 +110,13 @@ CPI_CATEGORIES: tuple[str, ...] = (
     "Eye care services",
     "Dental care services",
     "Other health care services",
+    # Personal Care
     "Personal soap",
     "Toiletry items and cosmetics",
     "Oral-hygiene products",
     "Other personal care supplies and equipment",
     "Personal care services",
+    # Recreation, Education, and Reading
     "Computer equipment, software and supplies",
     "Multipurpose digital devices",
     "Recreational services",

@@ -121,7 +121,7 @@ class LveProjector:
         return result
 
     # Private Methods
-    # ==========================================================================
+    # --------------------------------------------------------------------------
 
     def _load_cpi_data(self) -> pd.DataFrame:
         """Loads monthly CPI data (from local file) into a DataFrame, tz-naive and
