@@ -4,7 +4,6 @@ import re
 from collections.abc import Callable
 from functools import cached_property
 
-import gspread as gs
 import pandas as pd
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, DAILY, WEEKLY, MONTHLY, YEARLY
@@ -14,7 +13,8 @@ logging.getLogger("darts").setLevel(logging.ERROR)
 from darts import TimeSeries
 from darts.models import ExponentialSmoothing
 
-from constants import CPI_CSV_PATH, GCP_KEY_PATH
+from lve_store import LveStore
+from constants import CPI_CSV_PATH
 from schemas import (
     LvePlanID,
     LveCategory,
@@ -145,36 +145,19 @@ class LveProjector:
     def _load_lve_data(self) -> dict[LveCategory, pd.DataFrame]:
         """Loads LVE plan (on Google Sheets) into a dict, keyed by category."""
 
-        # Setup base result and load data
+        # Setup base result
         result = {
             lve_category: pd.DataFrame(columns=lve_dtype).astype(lve_dtype)
             for lve_category, lve_dtype in LVE_DTYPE_BY_CATEGORY.items()
+            if lve_category in LVE_BILL_CATEGORIES
         }
-        gcp_client = gs.service_account(GCP_KEY_PATH, gs.auth.READONLY_SCOPES)
-        lve_ssheet = gcp_client.open_by_key(self.plan_id)
-        lve_sheet_by_title = {
-            sheet.title: sheet for sheet in lve_ssheet.worksheets(exclude_hidden=True)
-        }
+        lve_store = LveStore(self.plan_id)
 
         # Mount data onto result
         for lve_category in result.keys():
-            lve_sheet_found = lve_sheet_by_title.get(lve_category.value)
-
-            if not lve_sheet_found:
-                continue
-
-            head_row_found, *data_rows_found = lve_sheet_found.get_values(
-                value_render_option=gs.utils.ValueRenderOption.unformatted,
-                date_time_render_option=gs.utils.DateTimeOption.formatted_string,
-            )
-
-            # Drop blank rows: allows missing entries and empty tables of proper form.
-            data_rows_found = [
-                row for row in data_rows_found if any(cell != "" for cell in row)
-            ]
+            head_row_found, *data_rows_found = lve_store.get_table(lve_category.value)
 
             lve_construct = pd.DataFrame(columns=head_row_found, data=data_rows_found)
-
             if lve_construct.empty:
                 continue
 

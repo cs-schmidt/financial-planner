@@ -18,6 +18,16 @@ class LveCategory(StrEnum):
     DURABLES = "durables"
 
 
+class LveBillCategory(StrEnum):
+    SERVICES = LveCategory.SERVICES.value
+    OBLIGATIONS = LveCategory.OBLIGATIONS.value
+    NONDURABLES = LveCategory.NONDURABLES.value
+
+
+class LveSupplyCategory(StrEnum):
+    DURABLES = LveCategory.DURABLES.value
+
+
 class PeriodType(StrEnum):
     YEAR = "Year"
     MONTH = "Month"
@@ -216,12 +226,8 @@ PLAIN_BILL_DTYPE: dict[str, str] = _extract_dtypes(PLAIN_BILL_SCHEMA)
 USAGE_BILL_DTYPE: dict[str, str] = _extract_dtypes(USAGE_BILL_SCHEMA)
 SUPPLY_COST_DTYPE: dict[str, str] = _extract_dtypes(SUPPLY_COST_SCHEMA)
 
-LVE_BILL_CATEGORIES: tuple[LveCategory, ...] = (
-    LveCategory.SERVICES,
-    LveCategory.OBLIGATIONS,
-    LveCategory.NONDURABLES,
-)
-
+LVE_BILL_CATEGORIES: tuple[LveBillCategory, ...] = tuple(LveBillCategory)
+LVE_SUPPLY_CATEGORIES: tuple[LveSupplyCategory, ...] = tuple(LveSupplyCategory)
 
 LVE_DTYPE_BY_CATEGORY: dict[LveCategory, dict[str, str]] = {
     LveCategory.SERVICES: PLAIN_BILL_DTYPE,
