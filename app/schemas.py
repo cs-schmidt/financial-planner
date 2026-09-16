@@ -2,8 +2,8 @@ from enum import StrEnum
 
 import pandas as pd
 import pandera as pda
-import pandera.extensions as pda_extensions
 from pandera.engines.pandas_engine import DateTime
+import pandera.extensions as pda_extensions
 
 
 class LvePlanID(StrEnum):
@@ -24,7 +24,7 @@ class LveBillCategory(StrEnum):
     NONDURABLES = LveCategory.NONDURABLES.value
 
 
-class LveSupplyCategory(StrEnum):
+class LveStockCategory(StrEnum):
     DURABLES = LveCategory.DURABLES.value
 
 
@@ -33,6 +33,10 @@ class PeriodType(StrEnum):
     MONTH = "Month"
     WEEK = "Week"
     DAY = "Day"
+
+
+LVE_BILL_CATEGORIES: tuple[LveBillCategory, ...] = tuple(LveBillCategory)
+LVE_STOCK_CATEGORIES: tuple[LveStockCategory, ...] = tuple(LveStockCategory)
 
 
 PAY_CATEGORIES: tuple[str, ...] = (
@@ -53,7 +57,7 @@ PAY_CATEGORIES: tuple[str, ...] = (
     "Other Costs",
 )
 
-# NOTE: Maybe derive from data source (don't store as Enum or closed set of strings).
+# NOTE: Maybe pull this from the data source instead for maintainability.
 CPI_CATEGORIES: tuple[str, ...] = (
     # Shelter
     "Rent",
@@ -141,7 +145,6 @@ CPI_CATEGORIES: tuple[str, ...] = (
 # LVE Table Data Translation Schemas
 # --------------------------------------------------------------------------
 
-
 DATE_DTYPE = DateTime(to_datetime_kwargs={"format": "%Y-%m-%d", "errors": "raise"})
 
 
@@ -149,10 +152,8 @@ DATE_DTYPE = DateTime(to_datetime_kwargs={"format": "%Y-%m-%d", "errors": "raise
 def is_non_blank(series: pd.Series) -> bool:
     """Return True if `series` is composed of strings that are non-empty."""
 
-    return series.str.strip().ne("")
+    return series.notna() & series.str.strip().ne("")
 
-
-# BUG: Schemas won't handle missing cpi_category bills correctly.
 
 PLAIN_BILL_SCHEMA = pda.DataFrameSchema(
     columns={
@@ -188,7 +189,7 @@ USAGE_BILL_SCHEMA = pda.DataFrameSchema(
     },
 )
 
-SUPPLY_COST_SCHEMA = pda.DataFrameSchema(
+STOCK_COST_SCHEMA = pda.DataFrameSchema(
     columns={
         "Item": pda.Column(str, pda.Check.is_non_blank(), unique=True),
         "Pay Category": pda.Column(str, pda.Check.isin(PAY_CATEGORIES)),
@@ -200,12 +201,11 @@ SUPPLY_COST_SCHEMA = pda.DataFrameSchema(
     }
 )
 
-
 LVE_SCHEMA_BY_CATEGORY: dict[LveCategory, pda.DataFrameSchema] = {
     LveCategory.SERVICES: PLAIN_BILL_SCHEMA,
     LveCategory.OBLIGATIONS: PLAIN_BILL_SCHEMA,
     LveCategory.NONDURABLES: USAGE_BILL_SCHEMA,
-    LveCategory.DURABLES: SUPPLY_COST_SCHEMA,
+    LveCategory.DURABLES: STOCK_COST_SCHEMA,
 }
 
 
@@ -224,14 +224,11 @@ def _extract_dtypes(schema: pda.DataFrameSchema) -> dict[str, str]:
 
 PLAIN_BILL_DTYPE: dict[str, str] = _extract_dtypes(PLAIN_BILL_SCHEMA)
 USAGE_BILL_DTYPE: dict[str, str] = _extract_dtypes(USAGE_BILL_SCHEMA)
-SUPPLY_COST_DTYPE: dict[str, str] = _extract_dtypes(SUPPLY_COST_SCHEMA)
-
-LVE_BILL_CATEGORIES: tuple[LveBillCategory, ...] = tuple(LveBillCategory)
-LVE_SUPPLY_CATEGORIES: tuple[LveSupplyCategory, ...] = tuple(LveSupplyCategory)
+STOCK_COST_DTYPE: dict[str, str] = _extract_dtypes(STOCK_COST_SCHEMA)
 
 LVE_DTYPE_BY_CATEGORY: dict[LveCategory, dict[str, str]] = {
     LveCategory.SERVICES: PLAIN_BILL_DTYPE,
     LveCategory.OBLIGATIONS: PLAIN_BILL_DTYPE,
     LveCategory.NONDURABLES: USAGE_BILL_DTYPE,
-    LveCategory.DURABLES: SUPPLY_COST_DTYPE,
+    LveCategory.DURABLES: STOCK_COST_DTYPE,
 }

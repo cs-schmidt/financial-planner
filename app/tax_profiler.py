@@ -6,9 +6,9 @@ import math
 #       are indexed ~2% for 2026 and haven't been refreshed yet.
 
 """
-------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 RESOURCES (Canadian Taxes)
-------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 (1) General:
     (1.1) Tax Tips:
         - https://www.taxtips.ca/calculators/canadian-tax/canadian-tax-calculator.htm
@@ -40,6 +40,7 @@ class TaxBracket:
     """A single marginal-rate slice of a tax schedule."""
 
     def __init__(self, min_amount: float, max_amount: float, rate: float):
+
         if min_amount < 0:
             raise ValueError(f"min_amount must be >= 0, got {min_amount}")
         if max_amount <= min_amount:
@@ -48,6 +49,7 @@ class TaxBracket:
             )
         if not 0.0 <= rate <= 1.0:
             raise ValueError(f"rate must be between 0 and 1, got {rate}")
+
         self.min = min_amount
         self.max = max_amount
         self.rate = rate
@@ -61,6 +63,7 @@ class TaxSchedule:
     """
 
     def __init__(self, thresholds_and_rates: list[tuple[float, float]]):
+
         if not thresholds_and_rates:
             raise ValueError("thresholds_and_rates must not be empty")
 
@@ -84,10 +87,12 @@ class TaxSchedule:
     @property
     def lowest_rate(self) -> float:
         """Rate of the first bracket, used to value non-refundable credits."""
+
         return self._brackets[0].rate
 
     def tax_on(self, taxable_income: float) -> float:
         """Total progressive tax owed on a given taxable income."""
+
         if taxable_income < 0:
             raise ValueError(f"taxable_income must be >= 0, got {taxable_income}")
         result = 0.0
@@ -111,8 +116,9 @@ FIT_SCHEDULE = TaxSchedule(
         (253414, 0.33),
     ]
 )
-# Alberta provincial income tax schedule (2.1).
-AB_SCHEDULE = TaxSchedule(
+
+# State/Provincial (Alberta) provincial income tax schedule (2.1).
+SIT_SCHEDULE = TaxSchedule(
     [
         (0, 0.08),
         (60000, 0.10),
@@ -123,37 +129,45 @@ AB_SCHEDULE = TaxSchedule(
     ]
 )
 
+
 # Base and enhanced CPP Parameters (3.1).
 CPP_1 = {"pensionable_max": 71300, "exemption": 3500, "added_rate": 0.01, "rate": 0.0595}
 CPP_2 = {"pensionable_max": 81200, "rate": 0.04}
+
 # EI Parameters (3.2)
 EI = {"insurable_max": 65700, "rate": 0.0164}
+
 # Federal basic personal amount (4.1).
 FBPA = {"min": 14538, "max": 16129}
+
 # Alberta basic personal amount (4.2).
-AB_BPA = 22323
-# Canada employment amount (4.3).
-CEBA = 1471
-# Capital gains inclusion rate for individuals (5.1).
-CAPITAL_GAINS_INCLUSION_RATE = 0.5
+SBPA = 22323
 
 # Federal BPA phases out between the 4th and 5th federal bracket thresholds.
 FBPA_DIMINISH_LOWER = FIT_SCHEDULE.brackets[3].min
 FBPA_DIMINISH_UPPER = FIT_SCHEDULE.brackets[3].max
 
+# Canada employment amount (4.3).
+CEBA = 1471
+
+# Capital gains inclusion rate for individuals (5.1).
+CAPITAL_GAINS_INCLUSION_RATE = 0.5
+
 
 class TaxProfiler:
-    """Represents a set of data and methods for federal + Alberta tax calculations."""
+    """Represents a set of data and methods for tax calculations."""
 
     def __init__(self, self_empl: bool):
         self.self_empl = self_empl
 
     def taxable_income(self, earned_income: float) -> float:
         """Compute taxable income."""
+
         return max(earned_income - self.tax_deduction(earned_income), 0)
 
     def tax_total(self, earned_income: float) -> float:
         """Compute total taxes owed."""
+
         gross_taxes = (
             self.income_tax(earned_income),
             self.cpp_contribution(earned_income),
@@ -163,26 +177,30 @@ class TaxProfiler:
 
     def income_tax(self, earned_income: float) -> float:
         """Compute income tax owed."""
+
         income_taxes = (
             self.federal_income_tax(earned_income),
-            self.provincial_income_tax(earned_income),
+            self.state_income_tax(earned_income),
         )
         return sum(income_taxes)
 
     def federal_income_tax(self, earned_income: float) -> float:
         """Compute gross federal income tax owed."""
+
         gross_tax_due = FIT_SCHEDULE.tax_on(self.taxable_income(earned_income))
         nr_tax_credit = self.federal_credit(earned_income)
         return max(gross_tax_due - nr_tax_credit, 0)
 
-    def provincial_income_tax(self, earned_income: float) -> float:
-        """Compute gross Alberta income tax owed."""
-        gross_tax_due = AB_SCHEDULE.tax_on(self.taxable_income(earned_income))
-        nr_tax_credit = self.provincial_credit(earned_income)
+    def state_income_tax(self, earned_income: float) -> float:
+        """Compute gross state/provincial income tax owed."""
+
+        gross_tax_due = SIT_SCHEDULE.tax_on(self.taxable_income(earned_income))
+        nr_tax_credit = self.state_credit(earned_income)
         return max(gross_tax_due - nr_tax_credit, 0)
 
     def cpp_contribution(self, earned_income: float) -> float:
         """Compute CPP contribution owed."""
+
         contributions = (
             self.cpp1_contribution(earned_income),
             self.cpp2_contribution(earned_income),
@@ -191,6 +209,7 @@ class TaxProfiler:
 
     def cpp1_contribution(self, earned_income: float) -> float:
         """Compute base CPP contribution owed."""
+
         if earned_income <= CPP_1["exemption"]:
             return 0.0
         pensionable_total = min(earned_income, CPP_1["pensionable_max"])
@@ -199,6 +218,7 @@ class TaxProfiler:
 
     def cpp2_contribution(self, earned_income: float) -> float:
         """Compute enhanced CPP contribution owed."""
+
         if earned_income <= CPP_1["pensionable_max"]:
             return 0.0
         pensionable_total = min(earned_income, CPP_2["pensionable_max"])
@@ -207,15 +227,18 @@ class TaxProfiler:
 
     def ei_premium(self, earned_income: float) -> float:
         """Compute EI premium owed."""
+
         if self.self_empl:
             return 0.0
         insurable_total = min(earned_income, EI["insurable_max"])
         return insurable_total * EI["rate"]
 
-    # Tax Deductions
-    # --------------------------------------------
+    # Tax Deduction Methods
+    # -------------------------------------------------------------------------
+
     def tax_deduction(self, earned_income: float) -> float:
         """Compute total tax deductions received."""
+
         deductions = (
             self.cpp1_deduction(earned_income),
             self.cpp2_deduction(earned_income),
@@ -224,6 +247,7 @@ class TaxProfiler:
 
     def cpp1_deduction(self, earned_income: float) -> float:
         """Compute base CPP tax deduction."""
+
         if not self.self_empl:
             return 0.0
         employer_base_portion = (CPP_1["rate"] - CPP_1["added_rate"]) / (
@@ -233,25 +257,33 @@ class TaxProfiler:
 
     def cpp2_deduction(self, earned_income: float) -> float:
         """Compute enhanced CPP tax deduction."""
+
         added_rate_portion = CPP_1["added_rate"] / CPP_1["rate"]
         return (
             added_rate_portion * self.cpp1_contribution(earned_income)
         ) + self.cpp2_contribution(earned_income)
 
-    # Tax Credits
-    # --------------------------------------------
+    # Tax Credit Methods
+    # -------------------------------------------------------------------------
+
     def tax_credit(self, earned_income: float) -> float:
         """Compute total non-refundable tax credit received."""
-        return self.federal_credit(earned_income) + self.provincial_credit(earned_income)
+
+        return self.federal_credit(earned_income) + self.state_credit(earned_income)
 
     def federal_credit(self, earned_income: float) -> float:
+        """Compute total non-refundable, federal tax credit."""
+
         return self.federal_credit_total(earned_income) * FIT_SCHEDULE.lowest_rate
 
-    def provincial_credit(self, earned_income: float) -> float:
-        return self.provincial_credit_total(earned_income) * AB_SCHEDULE.lowest_rate
+    def state_credit(self, earned_income: float) -> float:
+        """Compute total non-refundable, state/provincial tax credit."""
+
+        return self.state_credit_total(earned_income) * SIT_SCHEDULE.lowest_rate
 
     def federal_credit_total(self, earned_income: float) -> float:
         """Compute total non-refundable federal tax credit."""
+
         credits = (
             self.fbpa_credit(earned_income),
             self.cea_credit(earned_income),
@@ -260,10 +292,11 @@ class TaxProfiler:
         )
         return sum(credits)
 
-    def provincial_credit_total(self, earned_income: float) -> float:
-        """Compute total non-refundable Alberta tax credit."""
+    def state_credit_total(self, earned_income: float) -> float:
+        """Compute total non-refundable state/provincial tax credit."""
+
         credits = (
-            self.ab_bpa_credit(),
+            self.sbpa_credit(),
             self.cpp_credit(earned_income),
             self.ei_premium(earned_income),
         )
@@ -271,6 +304,7 @@ class TaxProfiler:
 
     def fbpa_credit(self, earned_income: float) -> float:
         """Compute Federal Basic Personal Amount (non-refundable) tax credit."""
+
         taxable_income = self.taxable_income(earned_income)
         if taxable_income <= FBPA_DIMINISH_LOWER:
             return FBPA["max"]
@@ -282,28 +316,33 @@ class TaxProfiler:
         bpa_adjusment = (taxable_income - FBPA_DIMINISH_LOWER) * diminish_rate
         return FBPA["max"] - bpa_adjusment
 
-    def ab_bpa_credit(self) -> float:
-        """Compute Alberta Basic Personal Amount (non-refundable) tax credit."""
-        return AB_BPA
+    def sbpa_credit(self) -> float:
+        """Compute State/Provincial Basic Personal Amount (non-refundable) tax credit."""
+
+        return SBPA
 
     def cea_credit(self, earned_income: float) -> float:
         """Compute Canada Employment Amount (non-refundable) tax credit."""
+
         if self.self_empl:
             return 0.0
         return min(CEBA, earned_income)
 
     def cpp_credit(self, earned_income: float) -> float:
         """Compute CPP contribution (non-refundable) tax credit."""
+
         if earned_income <= CPP_1["exemption"]:
             return 0.0
         pensionable_total = min(earned_income, CPP_1["pensionable_max"])
         rate = CPP_1["rate"] - CPP_1["added_rate"]
         return (pensionable_total - CPP_1["exemption"]) * rate
 
-    # Capital Gains
-    # --------------------------------------------
+    # Capital Gain Methods
+    # -------------------------------------------------------------------------
+
     def taxable_capital_gain(self, capital_gain: float) -> float:
         """The portion of a capital gain added to taxable income."""
+
         return max(capital_gain, 0) * CAPITAL_GAINS_INCLUSION_RATE
 
     def capital_gains_tax(self, capital_gain: float, earned_income: float = 0.0) -> float:
@@ -319,6 +358,7 @@ class TaxProfiler:
         without the gain, not gain * some flat rate. This is self-contained: it doesn't
         touch income_tax/tax_total, which know nothing about capital gains.
         """
+
         base_taxable_income = self.taxable_income(earned_income)
         stacked_taxable_income = base_taxable_income + self.taxable_capital_gain(
             capital_gain
@@ -335,13 +375,12 @@ class TaxProfiler:
         )
 
         state_before = max(
-            AB_SCHEDULE.tax_on(base_taxable_income)
-            - self.provincial_credit(earned_income),
+            SIT_SCHEDULE.tax_on(base_taxable_income) - self.state_credit(earned_income),
             0,
         )
         state_after = max(
-            AB_SCHEDULE.tax_on(stacked_taxable_income)
-            - self.provincial_credit(earned_income),
+            SIT_SCHEDULE.tax_on(stacked_taxable_income)
+            - self.state_credit(earned_income),
             0,
         )
 

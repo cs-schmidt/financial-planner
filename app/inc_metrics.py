@@ -1,4 +1,5 @@
 import sys
+
 from scipy.optimize import brentq
 from tax_profiler import TaxProfiler
 
