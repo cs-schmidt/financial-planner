@@ -1,7 +1,14 @@
-__pycache__/
+# Environment
 .env/
+.venv/
+
+# Python
+__pycache__/
+
+# Jupyter
 .ipynb_checkpoints/
 .jupyter/
+
+# Misc
 .ruff_cache/
 .temp/
-.venv/
